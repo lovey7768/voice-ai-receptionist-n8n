@@ -1,0 +1,97 @@
+{
+  "name": "Apex Dental - AI Voice Booking Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice-booking",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Vapi Inbound Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "webhookId": "vapi-voice-booking"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract tool call arguments from Vapi payload\nconst body = $input.item.json.body || $input.item.json;\nconst toolCalls = body.message?.toolCalls || [];\n\nlet args = {};\nlet callId = 'call_test_id';\n\nif (toolCalls.length > 0) {\n  callId = toolCalls[0].id;\n  args = toolCalls[0].function?.arguments || {};\n  if (typeof args === 'string') {\n    args = JSON.parse(args);\n  }\n} else {\n  args = body;\n}\n\n// Compute 30-minute booking duration\nconst startTime = new Date(args.appointment_time || new Date());\nconst endTime = new Date(startTime.getTime() + 30 * 60000);\n\nreturn {\n  call_id: callId,\n  patient_name: args.patient_name || 'Patient',\n  phone: args.phone || 'Not Provided',\n  reason: args.reason || 'General Checkup',\n  start_time: startTime.toISOString(),\n  end_time: endTime.toISOString()\n};"
+      },
+      "id": "2",
+      "name": "Parse Voice Data & Dates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list"
+        },
+        "start": "={{ $json.start_time }}",
+        "end": "={{ $json.end_time }}",
+        "additionalFields": {
+          "description": "=Booked via Apex Dental AI Receptionist.\\nCaller Phone: {{ $json.phone }}\\nReason for Visit: {{ $json.reason }}",
+          "summary": "=Apex Dental: {{ $json.patient_name }} ({{ $json.reason }})"
+        }
+      },
+      "id": "3",
+      "name": "Create Google Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"results\": [\n    {\n      \"toolCallId\": \"{{ $('Parse Voice Data & Dates').item.json.call_id }}\",\n      \"result\": \"Appointment successfully booked for {{ $('Parse Voice Data & Dates').item.json.patient_name }} at {{ $('Parse Voice Data & Dates').item.json.start_time }}. Confirm to the caller that their slot is locked in!\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Respond to Vapi with Confirmation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "Vapi Inbound Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Voice Data & Dates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Voice Data & Dates": {
+      "main": [
+        [
+          {
+            "node": "Create Google Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Respond to Vapi with Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true
+}
