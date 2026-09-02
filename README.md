@@ -59,7 +59,61 @@ voice-ai-receptionist-n8n/
 
 ## 🏛️ System Architecture
 
-### Data Flow & Web Interface Layer
+### Complete AI Assistant Ecosystem
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     Voice AI Receptionist System                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+                              ┌──────────────────┐
+                              │   User Interface │
+                              │  (Web + Mobile)  │
+                              └────────┬─────────┘
+                                       │
+              ┌────────────────────────┼────────────────────────┐
+              │                        │                        │
+              ▼                        ▼                        ▼
+    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+    │  Voice Channel   │    │   Web Interface  │    │   Management API │
+    │  (Vapi.ai)       │    │  (Web Dashboard) │    │  (Admin Panel)   │
+    └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘
+             │                       │                       │
+             │ STT + LLM             │ FastAPI Server        │
+             │ (Groq + Deepgram)     │                       │
+             │                       │                       │
+             └───────────┬───────────┴───────────┬───────────┘
+                         │                       │
+                         ▼                       ▼
+            ┌────────────────────────┐  ┌─────────────────┐
+            │  Cloudflare Tunnel     │  │   FastAPI Core  │
+            │  (Webhook Proxy)       │  │   (Port 8000)   │
+            └────────────┬───────────┘  └────────┬────────┘
+                         │                       │
+                         └───────────┬───────────┘
+                                     │
+                                     ▼
+                    ┌────────────────────────────────┐
+                    │   Dockerized n8n Workflows     │
+                    │   (Automation Engine)          │
+                    └────────────┬───────────────────┘
+                                 │
+                  ┌──────────────┼──────────────┐
+                  │              │              │
+                  ▼              ▼              ▼
+         ┌─────────────────┐ ┌─────────────┐ ┌──────────────┐
+         │ Google Calendar │ │  SQLite DB  │ │ Workflow     │
+         │ API Integration │ │  (FTS5)     │ │ JSON Storage │
+         └─────────────────┘ └─────────────┘ └──────────────┘
+                  │
+                  ▼
+         ┌─────────────────────┐
+         │  Events Created ✓   │
+         │  Appointments Set   │
+         └─────────────────────┘
+```
+
+### Data Flow Architecture
 
 ```mermaid
 graph LR
@@ -69,36 +123,11 @@ graph LR
     D --> E[Workflow Database]
     C --> F[Static Files]
     F --> G[Workflow JSONs]
-```
-
-### Voice Pipeline Architecture
-
-```
-[Incoming Voice Call / WebRTC]
-            │
-            ▼
-  ┌──────────────────┐
-  │     Vapi.ai      │ ◄── Deepgram Nova-2 (STT) + Cartesia (TTS)
-  │  Voice Pipeline  │ ◄── Groq LPU LLM Reasoning Engine
-  └─────────┬────────┘
-            │ (Emits Tool Call: book_appointment)
-            ▼
-  ┌──────────────────┐
-  │ Cloudflare Tunnel│ (Secure Edge Proxy)
-  └─────────┬────────┘
-            │ (POST Webhook)
-            ▼
-  ┌──────────────────┐
-  │ Dockerized n8n   │
-  │ Workflow Engine  │
-  └─────────┬────────┘
-            │
-    ┌───────┴───────────────────────┐
-    ▼                               ▼
-┌──────────────┐         ┌─────────────────┐
-│ Parse Dates  │         │ Google Calendar │ ──► Event Created
-│ & Payloads   │         │ API Integration │
-└──────────────┘         └─────────────────┘
+    A2[Voice Call] --> H[Vapi.ai]
+    H --> I[Groq LLM]
+    I --> J[n8n Workflows]
+    J --> K[Google Calendar]
+    J --> D
 ```
 
 ---
