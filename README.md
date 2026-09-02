@@ -117,12 +117,7 @@ voice-ai-receptionist-n8n/
 
 ```mermaid
 graph LR
-    A[User] --> B[Web Interface]
-    B --> C[FastAPI Server]
-    C --> D[SQLite FTS5]
-    D --> E[Workflow Database]
-    C --> F[Static Files]
-    F --> G[Workflow JSONs]
+  
     A2[Voice Call] --> H[Vapi.ai]
     H --> I[Groq LLM]
     I --> J[n8n Workflows]
