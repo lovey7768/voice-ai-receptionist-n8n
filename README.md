@@ -122,7 +122,7 @@ graph LR
     H --> I[Groq LLM]
     I --> J[n8n Workflows]
     J --> K[Google Calendar]
-    J --> D
+    
 ```
 
 ---
