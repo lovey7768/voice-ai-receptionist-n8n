@@ -1,4 +1,3 @@
-# voice-ai-receptionist-n8n
 # 🎙️ Autonomous Voice AI Receptionist & Appointment Engine
 
 [![Docker](https://img.shields.io/badge/Container-Docker-2496ED.svg)](https://www.docker.com/)
@@ -7,148 +6,177 @@
 [![Inference](https://img.shields.io/badge/Inference-Groq_LPU-00B4D8.svg)](https://groq.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A production-ready, low-latency conversational Voice AI receptionist and appointment engine designed for professional services (healthcare, dental, legal, real estate). It combines Vapi.ai's voice pipeline with a deterministic n8n workflow to reliably book calendar events without hallucinated dates or malformed payloads.
+A production-ready, low-latency conversational Voice AI receptionist and appointment engine designed for professional services (healthcare, dental, legal, real estate). It combines Vapi.ai's voice orchestration, n8n's workflow automation, and Groq's edge inference to handle appointment scheduling autonomously with sub-700ms audio latency.
+
+## Why This Project?
+
+Modern service businesses waste resources on phone-based appointment scheduling. Receptionists handle repetitive calls, time zone confusion, and double bookings. This system eliminates that overhead by:
+
+- **Reducing administrative burden**: Fully autonomous inbound call handling, 24/7.
+- **Keeping interactions natural**: Sub-700ms latency and voice continuity make the experience feel like talking to a real person.
+- **Ensuring data integrity**: Deterministic tool schemas prevent booking errors and hallucinated details.
+- **Staying developer-friendly**: n8n's visual workflow editor and Docker-first deployment make customization trivial.
 
 ---
 
 ## ⚡ Engineering Highlights
 
-- Sub-700ms audio latency: Deepgram Nova-2 for STT, Cartesia for natural TTS and Groq LPU for efficient LLM inference to keep conversations fluid and human-like.
-- Deterministic Tool Calling: Strict JSON schemas for the book_appointment tool ensure structured payloads and prevent hallucinated booking details.
-- Containerized Orchestration: Runs on Docker with persistent volumes and restart policies for production reliability.
-- Bi-directional Webhook Handshake: Vapi waits for n8n to acknowledge a successful calendar insertion before confirming verbally to the caller.
+- **Sub-700ms audio latency**: Deepgram Nova-2 for STT, Cartesia for natural TTS, and Groq LPU for efficient LLM inference keep conversations fluid and human-like.
+- **Deterministic Tool Calling**: Strict JSON schemas for the `book_appointment` tool ensure structured payloads and prevent hallucinated booking details.
+- **Containerized Orchestration**: Runs on Docker with persistent volumes and restart policies for production reliability.
+- **Bi-directional Webhook Handshake**: Vapi waits for n8n to acknowledge a successful calendar insertion before confirming verbally to the caller.
 
+---
 
 ## 🛠️ Tech Stack
 
-- Voice & Telephony: Vapi.ai (Deepgram Nova-2 STT + Cartesia TTS)
-- Orchestration: n8n (self-hosted, Docker)
-- Edge Tunnel: Cloudflare Tunnel (cloudflared)
-- Inference: Groq LPU (llama-3.3-70b-versatile / openai/gpt-oss-120b)
-- Calendar & CRM: Google Calendar API
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Voice & Telephony** | Vapi.ai | Call orchestration, STT/TTS pipeline |
+| **Speech-to-Text** | Deepgram Nova-2 | Fast, accurate transcription |
+| **Text-to-Speech** | Cartesia | Natural voice synthesis |
+| **LLM Inference** | Groq LPU | Sub-100ms latency reasoning |
+| **Workflow Orchestration** | n8n (Docker) | Calendar & event handling |
+| **Edge Tunnel** | Cloudflare Tunnel | Secure public webhook exposure |
+| **Calendar & CRM** | Google Calendar API | Persistent event storage |
 
+---
 
-## 🔧 Repository Structure
+## 📁 Repository Structure
 
 ```
 voice-ai-receptionist-n8n/
 ├── workflows/
 │   └── vapi-calendar-booking.json   # Exported n8n workflow JSON
-├── docker-compose.yml              # Production container config
-├── README.md                       # Architecture & portfolio documentation
+├── docker-compose.yml               # Production container config
+├── README.md                        # Architecture & documentation
 ├── .gitignore
 └── prompts/
-    └── system-prompt.txt           # Vapi agent system prompt & schemas
+    └── system-prompt.txt            # Vapi agent system prompt & JSON schemas
 ```
 
+---
 
 ## 🏛️ System Architecture
 
-```text
+```
 [Incoming Voice Call / WebRTC]
-              │
-              ▼
-    ┌──────────────────┐
-    │     Vapi.ai      │ ◄── Deepgram Nova-2 (STT) + Cartesia (TTS)
-    │  Voice Pipeline  │ ◄── Groq LPU LLM Reasoning Engine
-    └─────────┬────────┘
-              │ (Emits Tool Call: book_appointment)
-              ▼
-    ┌──────────────────┐
-    │ Cloudflare Tunnel│ (Secure Edge Proxy)
-    └─────────┬────────┘
-              │ (POST Webhook)
-              ▼
-    ┌──────────────────┐
-    │ Dockerized n8n   │
-    │ Workflow Engine  │
-    └─────────┬────────┘
-              │
-      ┌───────┴───────────────────────┐
-      ▼                               ▼
-┌──────────────┐             ┌─────────────────┐
-│ Parse Dates  │             │ Google Calendar │ ──► Event Created
-│ & Payloads   │             │ API Integration │
-└──────────────┘             └─────────────────┘
+            │
+            ▼
+  ┌──────────────────┐
+  │     Vapi.ai      │ ◄── Deepgram Nova-2 (STT) + Cartesia (TTS)
+  │  Voice Pipeline  │ ◄── Groq LPU LLM Reasoning Engine
+  └─────────┬────────┘
+            │ (Emits Tool Call: book_appointment)
+            ▼
+  ┌──────────────────┐
+  │ Cloudflare Tunnel│ (Secure Edge Proxy)
+  └─────────┬────────┘
+            │ (POST Webhook)
+            ▼
+  ┌──────────────────┐
+  │ Dockerized n8n   │
+  │ Workflow Engine  │
+  └─────────┬────────┘
+            │
+    ┌───────┴───────────────────────┐
+    ▼                               ▼
+┌──────────────┐         ┌─────────────────┐
+│ Parse Dates  │         │ Google Calendar │ ──► Event Created
+│ & Payloads   │         │ API Integration │
+└──────────────┘         └─────────────────┘
 ```
 
+---
 
-## 🚀 Quickstart — Run locally (production-ish)
+## 🚀 Quickstart — Run Locally
 
-1. Start n8n in Docker
+### 1. Start n8n in Docker
 
 ```bash
-docker run -d --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n --restart unless-stopped docker.n8n.io/n8nio/n8n
+docker run -d --name n8n -p 5678:5678 \
+  -v n8n_data:/home/node/.n8n \
+  --restart unless-stopped \
+  docker.n8n.io/n8nio/n8n
 ```
 
-2. Expose n8n to the internet (Cloudflare Tunnel)
+### 2. Expose n8n to the internet (Cloudflare Tunnel)
 
 ```bash
 npx cloudflared tunnel --url http://localhost:5678
 ```
 
-3. Import the workflow
+Copy the tunnel URL — you'll need it in step 4.
 
-- Open http://localhost:5678 in your browser (or your tunnel URL)
-- Import workflows/vapi-calendar-booking.json
+### 3. Import the workflow
+
+- Open `http://localhost:5678` in your browser
+- Navigate to **Workflows** → **Import from file**
+- Select `workflows/vapi-calendar-booking.json`
 - Connect your Google Calendar credentials in the workflow
 - Activate the workflow
 
-4. Configure the Vapi Assistant
+### 4. Configure the Vapi Assistant
 
-- Use prompts/system-prompt.txt as the assistant/system prompt.
-- Point the book_appointment tool server URL to:
+- Log into [Vapi.ai](https://vapi.ai)
+- Create or update your assistant with `prompts/system-prompt.txt`
+- Set the `book_appointment` tool server URL to:
 
 ```
 https://<your-tunnel-url>/webhook/voice-booking
 ```
 
-5. Test an incoming call via Vapi.ai and confirm that the webhook handshake creates a Google Calendar event and returns an affirmative response to Vapi before TTS confirmation.
-
-
-## 📄 Prompts & Schemas
-
-- prompts/system-prompt.txt — contains the Vapi system prompt and the strict JSON schema used for tool calling (book_appointment). Keep this file authoritative; workflows rely on its schema for safe, deterministic calls.
-
-
-## ✅ What I shipped (Highlights for recruiters)
-
-- A complete, end-to-end voice-to-calendar pipeline using Vapi.ai and n8n.
-- Deterministic tool schema to remove ambiguity from voice bookings.
-- Simple Docker-first deployment and Cloudflare Tunnel recipe to demo publicly.
-- Ready-to-import n8n workflow: workflows/vapi-calendar-booking.json
-
-
-## 📞 Recruiters — Canadian opportunities
-
-Hi — if you're reviewing this for hiring: I'm the author of this repo (GitHub: @lovey7768). I'm actively interviewing and open to opportunities in Canada. If you'd like a live demo or an interview today, please contact me via GitHub or open an issue and I will reply promptly.
-
-
-## 🧪 Notes, Caveats & Next steps
-
-- You must provision Vapi.ai credentials and Groq access separately — keys are not included in this repo.
-- For production deployments, run n8n behind a process manager or orchestrator and secure your webhooks with signatures and HTTPS.
-- Consider adding automated tests (integration for webhook handshakes) and a small demo script to simulate calls for easier recruiter demos.
-
-
-## 🪪 License
-
-MIT License
+- Test with an incoming call to verify the webhook handshake creates a Google Calendar event
 
 ---
 
-### Step 6: Initialize Git and Push to GitHub
+## 📄 Prompts & Schemas
 
-In your PC terminal, navigate into your folder:
+See `prompts/system-prompt.txt` for:
+- Full Vapi system prompt (instructions for conversation tone, handling edge cases)
+- Strict JSON schema for `book_appointment` tool calling
+- Example payloads
 
-```bash
-cd ~/voice-ai-receptionist-n8n  # or your directory path
+**Keep this file authoritative** — workflows depend on its schema for deterministic parsing.
 
-git init -b main
-git add .
-git commit -m "feat: complete voice AI receptionist with Vapi, Dockerized n8n, and Google Calendar integration"
+---
 
-# Replace with your GitHub repo URL
-git remote add origin https://github.com/YOUR_USERNAME/voice-ai-receptionist-n8n.git
-git push -u origin main
-```
+## ✅ What's Included
+
+- ✓ End-to-end voice-to-calendar pipeline using Vapi.ai and n8n
+- ✓ Deterministic tool schema to remove ambiguity from voice bookings
+- ✓ Docker-first deployment with Cloudflare Tunnel recipe for instant public access
+- ✓ Ready-to-import n8n workflow: `workflows/vapi-calendar-booking.json`
+- ✓ Example system prompt with conversation guidelines and edge-case handling
+
+---
+
+## 🧪 Notes, Caveats & Next Steps
+
+### Prerequisites
+
+You must provision credentials separately (not included in this repo):
+- **Vapi.ai API key** — [Sign up](https://vapi.ai)
+- **Groq API key** — [Get LPU access](https://groq.com)
+- **Google Calendar API credentials** — [Enable API](https://console.cloud.google.com/)
+
+### Production Considerations
+
+- Run n8n behind a process manager (systemd, supervisor) or orchestrator (Kubernetes) for resilience
+- Secure webhooks with HMAC signatures and enforce HTTPS-only connections
+- Consider rate limiting on the webhook endpoint to prevent abuse
+- Log all booking events for compliance and audit trails
+
+### Potential Enhancements
+
+- [ ] Add integration tests for webhook handshakes and appointment conflicts
+- [ ] Build a simple demo script to simulate calls for recruiter walkthroughs
+- [ ] Multi-language support for greeting and confirmation messages
+- [ ] Reschedule/cancel logic (not just creation)
+- [ ] SMS reminders via Twilio
+
+---
+
+## 📜 License
+
+MIT License — see [LICENSE](LICENSE) for details.
