@@ -6,11 +6,11 @@
 [![Inference](https://img.shields.io/badge/Inference-Groq_LPU-00B4D8.svg)](https://groq.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A production-ready, low-latency conversational Voice AI receptionist and appointment engine designed for professional services (healthcare, dental, legal, real estate). It combines Vapi.ai's voice orchestration, n8n's workflow automation, and Groq's edge inference to handle appointment scheduling autonomously with sub-700ms audio latency.
+A production-ready, low-latency conversational Voice AI receptionist and appointment engine designed for professional services (healthcare, dental, legal, real estate). It combines Vapi.ai's voice [...]
 
 ## Why This Project?
 
-Modern service businesses waste resources on phone-based appointment scheduling. Receptionists handle repetitive calls, time zone confusion, and double bookings. This system eliminates that overhead by:
+Modern service businesses waste resources on phone-based appointment scheduling. Receptionists handle repetitive calls, time zone confusion, and double bookings. This system eliminates that overhe[...]
 
 - **Reducing administrative burden**: Fully autonomous inbound call handling, 24/7.
 - **Keeping interactions natural**: Sub-700ms latency and voice continuity make the experience feel like talking to a real person.
@@ -58,6 +58,20 @@ voice-ai-receptionist-n8n/
 ---
 
 ## 🏛️ System Architecture
+
+### Data Flow & Web Interface Layer
+
+```mermaid
+graph LR
+    A[User] --> B[Web Interface]
+    B --> C[FastAPI Server]
+    C --> D[SQLite FTS5]
+    D --> E[Workflow Database]
+    C --> F[Static Files]
+    F --> G[Workflow JSONs]
+```
+
+### Voice Pipeline Architecture
 
 ```
 [Incoming Voice Call / WebRTC]
